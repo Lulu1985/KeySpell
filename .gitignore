@@ -1,0 +1,24 @@
+# Build output
+desktop/nuitka_out/
+desktop/secret_assets.py
+desktop/__pycache__/
+installer/output/
+installer/assets/MicrosoftEdgeWebView2RuntimeInstallerX64.exe
+*.exe
+
+# Local toolchain cache
+.nuitka_cache/
+.tools/
+.mingit_url.txt
+vue-ms-playwright/
+
+# Editor / tooling artifacts
+.trae-html-share-packages/
+.screenshots/
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store

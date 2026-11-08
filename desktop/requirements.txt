@@ -1,0 +1,5 @@
+pywebview>=5.0
+pyinstaller>=6.0
+
+# 仅在重新生成 app.ico 时需要
+pillow>=10.0
