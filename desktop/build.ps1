@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "1.1.0"
+$Version = "1.2.0"
 Set-Location $PSScriptRoot
 
 Write-Host "[1/4] 生成图标 ..."

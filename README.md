@@ -28,8 +28,10 @@ It ships in two editions that share exactly the same interface:
 - **Live metrics**: elapsed time, WPM, accuracy and a combo counter, updated on every key.
 - **On-screen keyboard hint** that highlights the next key to press.
 - **Star rewards and a result summary** with time, speed, accuracy and best combo.
-- **Progress is saved locally** — mastered items, best speed and daily rounds persist
-  between sessions.
+- **Progress is saved locally** — mastered items, best speed and daily rounds survive
+  restarts, reinstalls and in-place upgrades. The desktop edition stores them in a SQLite
+  database at `%APPDATA%\KeySpell\keyspell.db`; the web edition falls back to
+  `localStorage`.
 - **Chinese input-method guard**: the app warns you when a CJK IME would swallow keystrokes.
 - **Cat mascot "Cici"** keeps you company.
 
@@ -154,6 +156,9 @@ runtime if it is missing, and compiles `KeySpell-Setup-<version>.exe` with Inno 
 - **Local server, stable origin.** Assets are served from `127.0.0.1` on a fixed port so
   `localStorage` keeps the same origin and progress survives restarts. The server never
   listens on an external interface.
+- **SQLite persistence.** The desktop shell exposes `load_state()` / `save_state()` over the
+  pywebview bridge; the page reads the saved snapshot on start-up and writes after every
+  change. Data lives outside the install directory, so uninstalling keeps your records.
 - **Native compilation.** The desktop entry point is compiled with Nuitka to C, so the
   executable contains no Python bytecode and cannot be unpacked with PyInstaller tooling.
 - **Encrypted assets.** `pack_assets.py` compresses and encrypts the web resources; they

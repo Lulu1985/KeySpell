@@ -31,4 +31,4 @@ if (-not (Test-Path $Iscc)) { throw "未找到 ISCC.exe，请先安装 Inno Setu
 Write-Host "[3/3] 编译安装包 ..."
 & $Iscc (Join-Path $Here "KeySpell.iss")
 
-Write-Host "完成：$(Join-Path $Here 'output\KeySpell-Setup-1.1.0.exe')"
+Write-Host "完成：$(Join-Path $Here 'output\KeySpell-Setup-1.2.0.exe')"

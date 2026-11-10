@@ -2,9 +2,12 @@
 desktop/nuitka_out/
 desktop/secret_assets.py
 desktop/__pycache__/
+desktop/nuitka-crash-report.xml
 installer/output/
 installer/assets/MicrosoftEdgeWebView2RuntimeInstallerX64.exe
 *.exe
+*.log
+*.e32.tmp
 
 # Local toolchain cache
 .nuitka_cache/

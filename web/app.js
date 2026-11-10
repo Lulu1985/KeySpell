@@ -74,30 +74,68 @@ function blankProfile() {
   };
 }
 
+function normalizeStore(parsed) {
+  const base = { sound: true, python: blankProfile(), cpp: blankProfile() };
+  if (!parsed || typeof parsed !== "object") return base;
+  const merge = (a, b) => Object.assign({}, a, b || {});
+  return {
+    sound: parsed.sound !== false,
+    python: merge(blankProfile(), parsed.python),
+    cpp: merge(blankProfile(), parsed.cpp)
+  };
+}
+
 function loadStore() {
-  const fallback = { sound: true, python: blankProfile(), cpp: blankProfile() };
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    const merge = (base, extra) => Object.assign({}, base, extra || {});
-    return {
-      sound: parsed.sound !== false,
-      python: merge(blankProfile(), parsed.python),
-      cpp: merge(blankProfile(), parsed.cpp)
-    };
+    return raw ? normalizeStore(JSON.parse(raw)) : normalizeStore(null);
   } catch (e) {
-    return fallback;
+    return normalizeStore(null);
   }
 }
 
 const store = loadStore();
+
+/* 桌面版经由 pywebview 桥写入 sqlite；网页版自动回落到 localStorage */
+function desktopBridge() {
+  const api = window.pywebview && window.pywebview.api;
+  return api && typeof api.save_state === "function" ? api : null;
+}
 
 function saveStore() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(store));
   } catch (e) {
     /* 隐私模式下忽略 */
+  }
+  const api = desktopBridge();
+  if (api) {
+    try {
+      api.save_state(JSON.stringify(store));
+    } catch (e) {
+      /* 数据库不可用时继续使用本地缓存 */
+    }
+  }
+}
+
+let restored = false;
+
+async function restoreFromDesktop() {
+  if (restored) return;
+  restored = true;
+  const api = desktopBridge();
+  if (!api || typeof api.load_state !== "function") return;
+  try {
+    const raw = await api.load_state();
+    if (!raw) return;
+    const next = normalizeStore(JSON.parse(raw));
+    store.sound = next.sound;
+    store.python = next.python;
+    store.cpp = next.cpp;
+    updateSoundBtn();
+    renderHome();
+  } catch (e) {
+    /* 数据库读取失败时沿用本地缓存 */
   }
 }
 
@@ -795,3 +833,10 @@ document.addEventListener("keydown", (e) => {
 /* 初次渲染 */
 updateSoundBtn();
 renderHome();
+
+/* 桌面版：等 pywebview 就绪后从 sqlite 读回星星与练习记录 */
+if (window.pywebview && window.pywebview.api) {
+  restoreFromDesktop();
+} else {
+  window.addEventListener("pywebviewready", restoreFromDesktop, { once: true });
+}

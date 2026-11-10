@@ -2,7 +2,8 @@
 """KeySpell 桌面版入口。
 
 使用 WebView2（Windows 10/11 自带）渲染本地网页，界面与网页版完全一致。
-内置一个仅监听 127.0.0.1 的静态文件服务器，保证 localStorage 统计可以持久保存。
+内置一个仅监听 127.0.0.1 的静态文件服务器；星星与练习记录保存在
+%APPDATA%\\KeySpell\\keyspell.db（sqlite3），卸载重装不会丢失。
 """
 
 import base64
@@ -10,10 +11,13 @@ import ctypes
 import json
 import os
 import socket
+import sqlite3
 import sys
 import threading
 import urllib.parse
 import zlib
+from contextlib import closing
+from datetime import datetime
 from functools import partial
 from http.server import BaseHTTPRequestHandler, SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -22,6 +26,80 @@ import webview
 APP_TITLE = "KeySpell · 代码打字练习"
 PREFERRED_PORT = 51873
 PORT_SCAN_COUNT = 20
+APP_DIR_NAME = "KeySpell"
+DB_NAME = "keyspell.db"
+MAX_PAYLOAD_BYTES = 512 * 1024
+
+
+def data_dir() -> str:
+    """用户数据目录（%APPDATA%\\KeySpell），卸载重装或覆盖升级都不会被删除。"""
+    base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    path = os.path.join(base, APP_DIR_NAME)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+class Store:
+    """星星 / 练习记录的本机存储（sqlite3，单行 JSON）。"""
+
+    def __init__(self, path: str):
+        self._path = path
+        self._lock = threading.Lock()
+        self._ensure_schema()
+
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self._path, timeout=5)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
+
+    def _ensure_schema(self) -> None:
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS app_state ("
+                " id INTEGER PRIMARY KEY CHECK (id = 1),"
+                " payload TEXT NOT NULL,"
+                " updated_at TEXT NOT NULL)"
+            )
+
+    def load(self) -> str:
+        with self._lock, closing(self._connect()) as conn:
+            row = conn.execute("SELECT payload FROM app_state WHERE id = 1").fetchone()
+        return row[0] if row else ""
+
+    def save(self, payload: str) -> bool:
+        if not isinstance(payload, str) or not payload.strip():
+            return False
+        if len(payload.encode("utf-8")) > MAX_PAYLOAD_BYTES:
+            return False
+        stamp = datetime.now().isoformat(timespec="seconds")
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute(
+                "INSERT INTO app_state (id, payload, updated_at) VALUES (1, ?, ?)"
+                " ON CONFLICT(id) DO UPDATE SET payload = excluded.payload,"
+                " updated_at = excluded.updated_at",
+                (payload, stamp),
+            )
+        return True
+
+
+class Bridge:
+    """暴露给网页的 JS 接口：window.pywebview.api.load_state() / save_state()。"""
+
+    def __init__(self, store: Store):
+        self._store = store
+
+    def load_state(self) -> str:
+        try:
+            return self._store.load()
+        except Exception:
+            return ""
+
+    def save_state(self, payload: str) -> bool:
+        try:
+            return self._store.save(payload)
+        except Exception:
+            return False
 
 
 def bundled_root() -> str:
@@ -194,6 +272,8 @@ def main() -> int:
         show_error(APP_TITLE, "找不到 index.html，程序资源不完整，请重新安装。")
         return 1
 
+    home = data_dir()
+    store = Store(os.path.join(home, DB_NAME))
     port = pick_port()
     server = start_server(directory, port, assets)
     geometry = window_geometry()
@@ -202,11 +282,13 @@ def main() -> int:
         webview.create_window(
             APP_TITLE,
             f"http://127.0.0.1:{port}/index.html",
+            js_api=Bridge(store),
             min_size=(min(900, geometry["width"]), min(620, geometry["height"])),
             background_color="#fdf8f1",
             **geometry
         )
-        webview.start()
+        # private_mode=False 让 WebView2 保留自身存储，作为数据库之外的兜底
+        webview.start(private_mode=False, storage_path=os.path.join(home, "webview"))
     except Exception as exc:
         show_error(
             APP_TITLE,
