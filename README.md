@@ -13,6 +13,18 @@ It ships in two editions that share exactly the same interface:
 | **Web** | Open `web/index.html` in any modern browser | Zero install, works on any OS |
 | **Desktop** | Run the Windows installer (`.exe`) | Classroom lab machines, no browser setup |
 
+### Download
+
+**[⬇ Download the latest release](https://github.com/Cici1985/KeySpell/releases/latest)**
+
+| File | Size | Description |
+| --- | --- | --- |
+| `KeySpell-Setup-1.2.0.exe` | ~215 MB | Windows installer, bundles the WebView2 runtime, works offline |
+| `KeySpell.exe` | ~8 MB | Portable build, no installation required |
+
+Both files are attached to the GitHub Release (they are too large to live in the
+repository itself). See [Installation](#installation) for details.
+
 ---
 
 ## Features
@@ -41,7 +53,8 @@ It ships in two editions that share exactly the same interface:
 
 ### Option 1 — Windows installer (recommended)
 
-1. Download `KeySpell-Setup-<version>.exe` from the [Releases](../../releases) page.
+1. Download `KeySpell-Setup-1.2.0.exe` from the
+   [Releases page](https://github.com/Cici1985/KeySpell/releases/latest).
 2. Double-click it and follow the wizard. Administrator rights are required.
 3. Launch **KeySpell** from the Start menu (a desktop shortcut is optional).
 
