@@ -15,7 +15,7 @@ It ships in two editions that share exactly the same interface:
 
 ### Download
 
-**[⬇ Download the latest release](https://github.com/Cici1985/KeySpell/releases/latest)**
+**[⬇ Download the latest release](https://github.com/Lulu1985/KeySpell/releases/latest)**
 
 | File | Size | Description |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ repository itself). See [Installation](#installation) for details.
 ### Option 1 — Windows installer (recommended)
 
 1. Download `KeySpell-Setup-1.2.0.exe` from the
-   [Releases page](https://github.com/Cici1985/KeySpell/releases/latest).
+   [Releases page](https://github.com/Lulu1985/KeySpell/releases/latest).
 2. Double-click it and follow the wizard. Administrator rights are required.
 3. Launch **KeySpell** from the Start menu (a desktop shortcut is optional).
 
